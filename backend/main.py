@@ -5,8 +5,8 @@ from config import settings
 # Import routers
 from routers import (
     relocation, culture, language, voice, currency, documents, packing,
-    survival_plan, accommodation, rental_housing, itinerary, first_hours, arrival_tasks,
-    flights, calendar
+    survival_plan, accommodation, rental_housing, itinerary, first_hours,
+    arrival_tasks, flights, calendar
 )
 
 app = FastAPI(
@@ -15,16 +15,31 @@ app = FastAPI(
     version="2.1.0"
 )
 
-# CORS configuration
+# -------------------------
+# CORS CONFIGURATION
+# -------------------------
+
+allowed_origins = []
+
+# Frontend URL from environment (Vercel)
+if settings.frontend_url:
+    allowed_origins.append(settings.frontend_url)
+
+# Local development
+allowed_origins.append("http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
+# -------------------------
+# ROUTERS
+# -------------------------
+
 app.include_router(relocation.router)
 app.include_router(culture.router)
 app.include_router(language.router)
@@ -41,9 +56,12 @@ app.include_router(arrival_tasks.router)
 app.include_router(flights.router)
 app.include_router(calendar.router)
 
+# -------------------------
+# HEALTH ENDPOINTS
+# -------------------------
+
 @app.get("/")
 async def root():
-    """Health check endpoint"""
     return {
         "status": "online",
         "service": "Smart Global Relocation Companion API",
@@ -69,13 +87,8 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Detailed health check"""
     return {
         "status": "healthy",
         "gemini_configured": bool(settings.gemini_api_key),
         "firebase_configured": bool(settings.firebase_project_id)
     }
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=settings.backend_port)
