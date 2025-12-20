@@ -1,4 +1,5 @@
 [build]
+builder = "python"
 root = "backend"
 
 [deploy]
