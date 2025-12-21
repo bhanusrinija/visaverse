@@ -37,7 +37,7 @@ export default function SmartCalendar() {
   }, []);
 
   const handleGenerateTimeline = async () => {
-    if (!relocationData?.destination) {
+    if (!relocationData?.destinationCountry) {
       alert('Please complete the onboarding form first to set your destination.');
       return;
     }
@@ -45,10 +45,10 @@ export default function SmartCalendar() {
     setLoading(true);
     try {
       const response = await getRelocationTimeline({
-        destination: relocationData.destination,
+        destination: relocationData.destinationCountry,
         departureDate: relocationData.departureDate,
-        visaType: relocationData.visaType,
-        relocationType: relocationData.relocationType
+        visaType: relocationData.purpose,
+        relocationType: relocationData.purpose
       });
 
       setTimeline(response.data);
@@ -255,7 +255,7 @@ export default function SmartCalendar() {
         <div className="glass-card p-6">
           <button
             onClick={handleGenerateTimeline}
-            disabled={loading || !relocationData?.destination}
+            disabled={loading || !relocationData?.destinationCountry}
             className="w-full btn-primary flex items-center justify-center gap-2"
           >
             {loading ? (

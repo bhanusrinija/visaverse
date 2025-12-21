@@ -30,9 +30,9 @@ class FirebaseService:
             self.db = firestore.client()
             self.bucket = storage.bucket()
             self._initialized = True
-            print("✅ Firebase initialized successfully")
+            print("[OK] Firebase initialized successfully")
         except Exception as e:
-            print(f"⚠️ Firebase initialization warning: {e}")
+            print(f"[WARNING] Firebase initialization warning: {e}")
             print("Note: Firebase will work when proper credentials are configured")
             self.db = None
             self.bucket = None

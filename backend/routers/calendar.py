@@ -3,8 +3,35 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timedelta
 from services.gemini_service import gemini_service
+import json
+import re
 
 router = APIRouter(prefix="/api/calendar", tags=["Smart Calendar"])
+
+def extract_json_from_text(text: str) -> dict:
+    """Extract JSON from AI response text"""
+    try:
+        # Try direct JSON parse first
+        return json.loads(text)
+    except:
+        # Extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except:
+                pass
+
+        # Extract JSON from text
+        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except:
+                pass
+
+    # Return fallback structure
+    return {"error": "Could not parse JSON", "raw_text": text}
 
 class TimelineRequest(BaseModel):
     destination: str
@@ -99,7 +126,8 @@ async def get_relocation_timeline(request: TimelineRequest):
 
     try:
         response = await gemini_service.generate_response(prompt)
-        return {"data": response}
+        parsed_data = extract_json_from_text(response)
+        return {"data": parsed_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -151,7 +179,8 @@ async def generate_calendar_events(request: CalendarEventsRequest):
 
     try:
         response = await gemini_service.generate_response(prompt)
-        return {"data": response}
+        parsed_data = extract_json_from_text(response)
+        return {"data": parsed_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
