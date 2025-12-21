@@ -20,11 +20,15 @@ class AccommodationService:
         user_context = "student" if user_type == "student" else "traveler"
         pref_text = ", ".join(preferences) if preferences else "no specific preferences"
         
-        prompt = f"""You are an accommodation expert. Recommend stays in {city or destination_country} for a {user_context}.
+        prompt = f"""You are an accommodation expert with knowledge of REAL hotels and accommodations.
+Recommend ACTUAL, REAL hotels and stays that exist in {city or destination_country} for a {user_context}.
 
 Budget: ${budget_min}-${budget_max} per night
 Duration: {duration_days} days
 Preferences: {pref_text}
+
+IMPORTANT: Provide REAL hotel names, REAL prices, and REAL locations that actually exist in {city or destination_country}.
+Include well-known hotel chains (Hilton, Marriott, Hyatt, etc.) and popular local hotels.
 
 Provide response in JSON format:
 {{

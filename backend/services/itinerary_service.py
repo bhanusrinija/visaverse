@@ -18,20 +18,30 @@ class ItineraryService:
         
         interests_text = ", ".join(interests) if interests else "general sightseeing"
         
-        prompt = f"""You are a travel planning expert. Create a {duration_days}-day itinerary for {city}, {destination_country}.
+        prompt = f"""You are a travel planning expert with REAL knowledge of {city}, {destination_country}.
+Create a detailed {duration_days}-day itinerary with ACTUAL, REAL places to visit.
 
 Budget: ${total_budget}
 Travel Style: {travel_style}
 Interests: {interests_text}
+
+CRITICAL: Each day MUST be UNIQUE with DIFFERENT real attractions, restaurants, and activities.
+Include REAL place names: museums, landmarks, restaurants, markets, parks, etc.
+Make each day's activities DISTINCT and SPECIFIC to {city}.
 
 Provide response in JSON format:
 {{
     "daily_plans": [
         {{
             "day_number": 1,
-            "activities": ["activity 1", "activity 2"],
+            "activities": [
+                "9 AM: Visit [REAL LANDMARK NAME]",
+                "12 PM: Lunch at [REAL RESTAURANT NAME]",
+                "2 PM: Explore [REAL ATTRACTION NAME]",
+                "6 PM: Dinner at [REAL LOCAL AREA/RESTAURANT]"
+            ],
             "estimated_cost": 150.0,
-            "tips": ["tip 1", "tip 2"]
+            "tips": ["Specific tip for day 1 activities", "Best time to visit tip"]
         }}
     ],
     "budget_breakdown": {{
@@ -72,18 +82,36 @@ Ensure total_estimated_cost matches budget_breakdown sum and is close to ${total
     def _create_fallback_itinerary(self, city: str, days: int, budget: float) -> ItineraryResponse:
         """Create fallback itinerary"""
         daily_budget = budget / days
-        
+
+        # Different activities for each day
+        day_activities = [
+            ["9 AM: Visit main landmarks and historic center", "12 PM: Lunch at local market", "2 PM: Museum tour", "6 PM: Dinner at traditional restaurant"],
+            ["9 AM: Morning walking tour of old town", "11 AM: Coffee at local café", "1 PM: Shopping at main street", "5 PM: Sunset at scenic viewpoint"],
+            ["10 AM: Day trip to nearby attraction", "12 PM: Picnic lunch", "3 PM: Nature walk or park visit", "7 PM: Try street food"],
+            ["9 AM: Visit religious/cultural sites", "11 AM: Local craft market", "2 PM: Cooking class or food tour", "6 PM: Rooftop dining"],
+            ["8 AM: Early morning market visit", "10 AM: Architecture tour", "1 PM: Lunch cruise or harbor tour", "5 PM: Live music venue"],
+            ["10 AM: Art galleries and exhibitions", "1 PM: Trendy neighborhood lunch", "3 PM: Beach or waterfront", "7 PM: Farewell dinner"],
+            ["9 AM: Last-minute shopping", "11 AM: Brunch at popular spot", "2 PM: Relax at park/spa", "5 PM: Airport transfer"]
+        ]
+
+        daily_tips = [
+            ["Book tickets online to skip queues", "Start early to avoid crowds"],
+            ["Wear comfortable shoes for walking", "Bring camera for photos"],
+            ["Pack light snacks and water", "Check weather forecast"],
+            ["Dress modestly for religious sites", "Bargain at markets politely"],
+            ["Reserve evening venues in advance", "Try local public transport"],
+            ["Confirm tour timings beforehand", "Keep emergency contacts handy"],
+            ["Check-out time usually 11 AM", "Arrange transport 3 hours before flight"]
+        ]
+
         daily_plans = []
         for i in range(1, days + 1):
+            activity_idx = min(i-1, len(day_activities)-1)
             daily_plans.append(DayPlan(
                 day_number=i,
-                activities=[
-                    f"Morning: Explore local attractions",
-                    f"Afternoon: Visit cultural sites",
-                    f"Evening: Try local cuisine"
-                ],
+                activities=day_activities[activity_idx],
                 estimated_cost=daily_budget,
-                tips=[f"Book tickets in advance", "Use public transport"]
+                tips=daily_tips[activity_idx]
             ))
         
         return ItineraryResponse(

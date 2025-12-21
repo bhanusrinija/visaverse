@@ -72,10 +72,10 @@ class DocumentService:
     
     async def _analyze_with_ai(self, text: str, document_type: str) -> dict:
         """Analyze document text using Gemini AI"""
-        
+
         # Limit text length to avoid token limits
         text_preview = text[:4000] if len(text) > 4000 else text
-        
+
         prompt = f"""Analyze this {document_type} document and provide:
 
 1. A brief summary (2-3 sentences)
@@ -103,10 +103,17 @@ EXPLANATION: [simplified explanation]"""
             response = await gemini_service.generate_response(prompt)
             return self._parse_analysis(response, document_type)
         except Exception as e:
-            print(f"Error in AI analysis: {e}")
+            error_msg = str(e)
+            print(f"Error in AI analysis: {error_msg}")
+
+            # Check if it's a quota/rate limit error
+            if "quota" in error_msg.lower() or "rate" in error_msg.lower() or "429" in error_msg:
+                print("Gemini API quota exceeded, using fallback analysis")
+                return self._create_fallback_analysis(text_preview, document_type)
+
             return {
                 "summary": "Document uploaded successfully",
-                "key_points": ["AI analysis unavailable"],
+                "key_points": ["AI analysis temporarily unavailable"],
                 "important_dates": [],
                 "missing_info": [],
                 "simplified_explanation": "Please review the document manually.",
@@ -162,7 +169,7 @@ EXPLANATION: [simplified explanation]"""
         section = self._extract_section(text, start_marker, end_markers)
         if not section:
             return []
-        
+
         # Extract lines starting with - or •
         lines = section.split('\n')
         items = []
@@ -172,7 +179,89 @@ EXPLANATION: [simplified explanation]"""
                 items.append(line[1:].strip())
             elif line and items:  # Continuation of previous item
                 items[-1] += " " + line
-        
+
         return items[:10]  # Limit to 10 items
+
+    def _create_fallback_analysis(self, text: str, document_type: str) -> dict:
+        """Create basic analysis when AI is unavailable (quota exceeded)"""
+
+        # Extract dates using regex patterns
+        date_patterns = [
+            r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}',  # MM/DD/YYYY, DD-MM-YYYY
+            r'\d{4}[/-]\d{1,2}[/-]\d{1,2}',    # YYYY-MM-DD
+            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}',  # Month DD, YYYY
+            r'\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{4}'     # DD Month YYYY
+        ]
+
+        dates_found = []
+        for pattern in date_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            dates_found.extend(matches)
+
+        # Remove duplicates and limit to 5 dates
+        dates_found = list(dict.fromkeys(dates_found))[:5]
+
+        # Extract key sections/headings (lines in all caps or with colons)
+        key_points = []
+        lines = text.split('\n')
+        for line in lines[:50]:  # Check first 50 lines
+            line = line.strip()
+            if len(line) > 10 and len(line) < 100:
+                if line.isupper() or (': ' in line and len(line.split(': ')[0]) < 30):
+                    key_points.append(line)
+                    if len(key_points) >= 5:
+                        break
+
+        # If no headings found, use first few sentences
+        if not key_points:
+            sentences = text.replace('\n', ' ')[:500].split('. ')
+            key_points = [s.strip() + '.' for s in sentences[:3] if len(s.strip()) > 20]
+
+        # Document type specific tips
+        missing_info = []
+        explanation = ""
+
+        if document_type.lower() == "visa":
+            missing_info = [
+                "Verify all required signatures are present",
+                "Check visa validity dates",
+                "Confirm visa type matches your travel purpose",
+                "Review any restrictions or conditions"
+            ]
+            explanation = "This appears to be a visa document. Please verify all personal information is correct, check the validity period, and understand any travel restrictions. Keep this document safe during your trip."
+
+        elif document_type.lower() == "passport":
+            missing_info = [
+                "Check passport expiration date (should be valid 6+ months)",
+                "Verify personal information matches other documents",
+                "Look for any amendments or endorsements"
+            ]
+            explanation = "This appears to be a passport document. Ensure it's valid for at least 6 months beyond your travel dates. Verify all personal details are accurate."
+
+        else:
+            missing_info = [
+                "Review document carefully for completeness",
+                "Verify all dates and personal information",
+                "Check for required signatures or stamps"
+            ]
+            explanation = f"This is a {document_type} document. Please review it carefully to ensure all information is accurate and complete."
+
+        # Create summary
+        word_count = len(text.split())
+        summary = f"Document successfully uploaded and processed. Text extracted: approximately {word_count} words. "
+
+        if dates_found:
+            summary += f"Found {len(dates_found)} important date(s). "
+
+        summary += "AI-powered analysis is temporarily unavailable due to high demand, but basic information has been extracted below."
+
+        return {
+            "summary": summary,
+            "key_points": key_points if key_points else ["Document text extracted successfully", "Manual review recommended"],
+            "important_dates": dates_found if dates_found else [],
+            "missing_info": missing_info,
+            "simplified_explanation": explanation,
+            "document_type": document_type
+        }
 
 document_service = DocumentService()

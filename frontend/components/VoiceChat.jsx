@@ -53,10 +53,18 @@ export default function VoiceChat({ relocationData }) {
             const assistantMessage = { role: 'assistant', content: response.response_text, suggestions: response.suggestions };
             setMessages(prev => [...prev, assistantMessage]);
 
-            // Speak the response
+            // Speak the response (clean markdown formatting first)
             if (response.response_text) {
                 setIsSpeaking(true);
-                speechService.speak(response.response_text, {
+                // Remove markdown formatting for speech
+                const cleanText = response.response_text
+                    .replace(/\*\*/g, '')  // Remove bold markers
+                    .replace(/\*/g, '')     // Remove italic markers
+                    .replace(/#{1,6}\s/g, '') // Remove heading markers
+                    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links, keep text
+                    .replace(/`/g, '');     // Remove code markers
+
+                speechService.speak(cleanText, {
                     onEnd: () => setIsSpeaking(false),
                     onError: () => setIsSpeaking(false)
                 });
