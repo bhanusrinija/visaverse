@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Map, Calendar, DollarSign, Heart, TrendingUp, Loader2, AlertTriangle, X } from 'lucide-react';
+import { Map, MapPin, Calendar, DollarSign, Heart, TrendingUp, Loader2, AlertTriangle, X, Star } from 'lucide-react';
 import SaveablePlanWrapper from './SaveablePlanWrapper';
 
 export default function TravelItinerary({ relocationData }) {
@@ -26,6 +26,18 @@ export default function TravelItinerary({ relocationData }) {
         'architecture',
         'photography'
     ];
+
+    const [activeLocation, setActiveLocation] = useState('');
+
+    // Auto-scroll to map when activeLocation changes
+    useEffect(() => {
+        if (activeLocation) {
+            const mapElement = document.getElementById('itinerary-map');
+            if (mapElement) {
+                mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [activeLocation]);
 
     // Load cached itinerary
     useEffect(() => {
@@ -53,6 +65,7 @@ export default function TravelItinerary({ relocationData }) {
     const generateItinerary = async () => {
         setLoading(true);
         setError(null);
+        setActiveLocation('');
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/itinerary/generate`, {
                 method: 'POST',
@@ -88,6 +101,7 @@ export default function TravelItinerary({ relocationData }) {
 
     const clearItinerary = () => {
         setItinerary(null);
+        setActiveLocation('');
         const cacheKey = `itinerary_${relocationData.destinationCountry}_${travelStyle}`;
         localStorage.removeItem(cacheKey);
     };
@@ -164,11 +178,10 @@ export default function TravelItinerary({ relocationData }) {
                             <button
                                 key={style}
                                 onClick={() => setTravelStyle(style)}
-                                className={`py-3 px-4 rounded-lg font-semibold capitalize transition-all ${
-                                    travelStyle === style
-                                        ? 'bg-gradient-to-r from-success-500 to-primary-500 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                                className={`py-3 px-4 rounded-lg font-semibold capitalize transition-all ${travelStyle === style
+                                    ? 'bg-gradient-to-r from-success-500 to-primary-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
                             >
                                 {style}
                             </button>
@@ -187,11 +200,10 @@ export default function TravelItinerary({ relocationData }) {
                             <button
                                 key={interest}
                                 onClick={() => toggleInterest(interest)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
-                                    interests.includes(interest)
-                                        ? 'bg-accent-500 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${interests.includes(interest)
+                                    ? 'bg-accent-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
                             >
                                 {interest}
                             </button>
@@ -224,6 +236,35 @@ export default function TravelItinerary({ relocationData }) {
                 {/* Itinerary Results */}
                 {itinerary && (
                     <div className="space-y-6 animate-fade-in">
+                        {/* Map Preview */}
+                        <div id="itinerary-map" className="glass-card p-0 overflow-hidden h-96 relative border-2 border-primary-200">
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                scrolling="no"
+                                marginHeight="0"
+                                marginWidth="0"
+                                src={`https://maps.google.com/maps?q=${encodeURIComponent((activeLocation ? activeLocation + ', ' : '') + (city || relocationData.destinationCountry))}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                title="Destination Map"
+                            ></iframe>
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md p-3 rounded-lg shadow-lg border border-primary-200">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current View</p>
+                                <p className="text-sm font-bold text-primary-800 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-danger-500 animate-bounce" />
+                                    {activeLocation || city || relocationData.destinationCountry}
+                                </p>
+                            </div>
+                            {activeLocation && (
+                                <button
+                                    onClick={() => setActiveLocation('')}
+                                    className="absolute bottom-4 right-4 bg-white px-3 py-1.5 rounded-full text-xs font-bold text-primary-600 shadow-lg border border-primary-200 hover:bg-primary-50 transition-all"
+                                >
+                                    Reset to City
+                                </button>
+                            )}
+                        </div>
+
                         {/* Budget Breakdown */}
                         <div className="glass-card p-5">
                             <h3 className="text-xl font-bold text-success-600 mb-4 flex items-center gap-2">
@@ -275,20 +316,59 @@ export default function TravelItinerary({ relocationData }) {
                             </h3>
                             {itinerary.daily_plans?.map((day) => (
                                 <div key={day.day_number} className="glass-card p-5 card-hover">
-                                    <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-start justify-between mb-4">
                                         <h4 className="text-lg font-bold text-accent-600">Day {day.day_number}</h4>
                                         <span className="px-3 py-1 bg-success-100 text-success-700 rounded-full text-sm font-semibold">
-                                            ${day.estimated_cost}
+                                            Approx. ${day.estimated_cost}
                                         </span>
                                     </div>
-                                    <ul className="space-y-2 mb-4">
+                                    <div className="space-y-3 mb-4">
                                         {day.activities?.map((activity, idx) => (
-                                            <li key={idx} className="text-gray-700 flex items-start gap-2">
-                                                <Calendar className="w-4 h-4 text-accent-600 flex-shrink-0 mt-1" />
-                                                {activity}
-                                            </li>
+                                            <div key={idx} className="flex flex-col gap-1 p-3 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-primary-300 transition-all group">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold bg-primary-100 text-primary-600 px-2 py-0.5 rounded uppercase tracking-wider">{activity.time || "N/A"}</span>
+                                                        <p className="text-sm font-bold text-gray-800">{activity.task || activity}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {activity.rating && (
+                                                            <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+                                                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                                <span className="text-[10px] font-bold text-yellow-700">{activity.rating}</span>
+                                                            </div>
+                                                        )}
+                                                        <button
+                                                            onClick={() => setActiveLocation(activity.location || activity)}
+                                                            className="text-primary-500 hover:text-primary-700 p-1.5 rounded-full hover:bg-primary-50 transition-all opacity-0 group-hover:opacity-100"
+                                                            title="View on Map"
+                                                        >
+                                                            <MapPin className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {activity.description && (
+                                                    <p className="text-xs text-gray-600 ml-16 mt-0.5 italic">"{activity.description}"</p>
+                                                )}
+                                                {activity.location && (
+                                                    <div className="flex items-center justify-between ml-16 mt-1">
+                                                        <p className="text-xs text-primary-600 flex items-center gap-1 font-medium">
+                                                            <MapPin className="w-3 h-3" />
+                                                            {activity.location}
+                                                        </p>
+                                                        <a
+                                                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(activity.location)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[10px] text-accent-600 hover:underline flex items-center gap-1 font-bold"
+                                                        >
+                                                            Get Directions
+                                                            <ChevronRight className="w-2.5 h-2.5" />
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
-                                    </ul>
+                                    </div>
                                     {day.tips && day.tips.length > 0 && (
                                         <div className="bg-gray-100 rounded-lg p-3 mt-3 border border-gray-300">
                                             <p className="text-xs font-semibold text-primary-600 mb-2">Tips</p>

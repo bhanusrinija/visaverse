@@ -47,7 +47,7 @@ Provide a comprehensive response in the following JSON format:
 Be specific to {destination_country}. Include practical, actionable tasks for each week."""
 
         try:
-            response = await gemini_service.generate_response(prompt)
+            response = await gemini_service.generate_response(prompt, use_pro=True)
             response_text = response.strip()
             
             # Parse JSON from response

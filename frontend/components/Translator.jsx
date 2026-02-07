@@ -68,7 +68,9 @@ export default function Translator({ relocationData }) {
                 targetLang === 'Spanish' ? 'es-ES' :
                     targetLang === 'French' ? 'fr-FR' :
                         targetLang === 'Japanese' ? 'ja-JP' :
-                            targetLang === 'Chinese' ? 'zh-CN' : 'en-US';
+                            targetLang === 'Chinese' ? 'zh-CN' :
+                                targetLang === 'Hindi' ? 'hi-IN' :
+                                    targetLang === 'Telugu' ? 'te-IN' : 'en-US';
 
             speechService.speak(translatedText, { lang: langCode });
         }
@@ -104,8 +106,17 @@ export default function Translator({ relocationData }) {
                         className="input-glass w-full mb-3"
                     >
                         <option>English</option>
-                        <option>Telugu</option>
                         <option>Hindi</option>
+                        <option>Telugu</option>
+                        <option>Bengali</option>
+                        <option>Marathi</option>
+                        <option>Tamil</option>
+                        <option>Gujarati</option>
+                        <option>Urdu</option>
+                        <option>Kannada</option>
+                        <option>Odia</option>
+                        <option>Malayalam</option>
+                        <option>Punjabi</option>
                         <option>Spanish</option>
                         <option>French</option>
                         <option>German</option>
@@ -145,10 +156,21 @@ export default function Translator({ relocationData }) {
                         onChange={(e) => setTargetLang(e.target.value)}
                         className="input-glass w-full mb-3"
                     >
-                        <option>German</option>
+                        <option>Hindi</option>
+                        <option>Telugu</option>
+                        <option>Bengali</option>
+                        <option>Marathi</option>
+                        <option>Tamil</option>
+                        <option>Gujarati</option>
+                        <option>Urdu</option>
+                        <option>Kannada</option>
+                        <option>Odia</option>
+                        <option>Malayalam</option>
+                        <option>Punjabi</option>
                         <option>English</option>
                         <option>Spanish</option>
                         <option>French</option>
+                        <option>German</option>
                         <option>Japanese</option>
                         <option>Chinese</option>
                     </select>

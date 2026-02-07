@@ -17,10 +17,10 @@ export default function PackingList({ relocationData }) {
         setIsLoading(true);
         try {
             const listData = await packingAPI.getList(
-                relocationData.homeCountry,
-                relocationData.destinationCountry,
+                relocationData?.homeCountry || 'Unknown',
+                relocationData?.destinationCountry || 'Unknown',
                 30,
-                relocationData.purpose.toLowerCase()
+                (relocationData?.purpose || 'general').toLowerCase()
             );
             setPackingList(listData);
         } catch (error) {

@@ -7,7 +7,6 @@ import Translator from '@/components/Translator';
 import PDFUploader from '@/components/PDFUploader';
 import CurrencyConverter from '@/components/CurrencyConverter';
 import RelocationChecklist from '@/components/RelocationChecklist';
-import CultureGuide from '@/components/CultureGuide';
 import LanguageLearning from '@/components/LanguageLearning';
 import PackingList from '@/components/PackingList';
 import SurvivalPlan from '@/components/SurvivalPlan';
@@ -18,7 +17,8 @@ import FirstHoursChecklist from '@/components/FirstHoursChecklist';
 import ArrivalTasks from '@/components/ArrivalTasks';
 import FlightDeals from '@/components/FlightDeals';
 import SmartCalendar from '@/components/SmartCalendar';
-import { Home, MessageSquare, Languages, FileText, Coins, Package, BookOpen, CheckSquare, Calendar, Building2, Map, Clock, ListChecks, ChevronRight, Menu, X, Plane, CalendarClock } from 'lucide-react';
+import CulturalBuddy from '@/components/CulturalBuddy';
+import { Home, MessageSquare, Languages, FileText, Coins, Package, BookOpen, CheckSquare, Calendar, Building2, Map, Clock, ListChecks, ChevronRight, Menu, X, Plane, CalendarClock, UserPlus } from 'lucide-react';
 
 export default function Dashboard() {
     const router = useRouter();
@@ -73,7 +73,7 @@ export default function Dashboard() {
         {
             name: 'Cultural Integration',
             items: [
-                { id: 'culture', label: 'Culture Guide', icon: BookOpen, color: 'text-primary-600' },
+                { id: 'buddy', label: 'Cultural Buddy', icon: UserPlus, color: 'text-yellow-600' },
                 { id: 'language', label: 'Language Learning', icon: Languages, color: 'text-accent-600' },
                 { id: 'translator', label: 'Live Translator', icon: Languages, color: 'text-info-600' },
             ]
@@ -94,11 +94,10 @@ export default function Dashboard() {
                 setActiveTab(item.id);
                 setSidebarOpen(false);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all group ${
-                activeTab === item.id
-                    ? 'bg-gradient-to-r from-primary-400 to-accent-400 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100'
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all group ${activeTab === item.id
+                ? 'bg-gradient-to-r from-primary-400 to-accent-400 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-100'
+                }`}
         >
             <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : item.color}`} />
             <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
@@ -230,14 +229,6 @@ export default function Dashboard() {
                                             <p className="text-sm text-gray-600">Budget-aware itineraries</p>
                                         </div>
 
-                                        <div
-                                            onClick={() => setActiveTab('culture')}
-                                            className="p-4 bg-primary-50 rounded-xl border border-primary-200 hover:border-primary-400 transition-all cursor-pointer hover:shadow-md"
-                                        >
-                                            <BookOpen className="w-8 h-8 text-primary-600 mb-2" />
-                                            <h3 className="font-semibold text-gray-800 mb-1">Culture Guide</h3>
-                                            <p className="text-sm text-gray-600">Learn local customs</p>
-                                        </div>
 
                                         <div
                                             onClick={() => setActiveTab('voice')}
@@ -246,6 +237,15 @@ export default function Dashboard() {
                                             <MessageSquare className="w-8 h-8 text-primary-600 mb-2" />
                                             <h3 className="font-semibold text-gray-800 mb-1">Voice AI Assistant</h3>
                                             <p className="text-sm text-gray-600">Ask anything, anytime</p>
+                                        </div>
+
+                                        <div
+                                            onClick={() => setActiveTab('buddy')}
+                                            className="p-4 bg-yellow-50 rounded-xl border border-yellow-200 hover:border-yellow-400 transition-all cursor-pointer hover:shadow-md"
+                                        >
+                                            <UserPlus className="w-8 h-8 text-yellow-600 mb-2" />
+                                            <h3 className="font-semibold text-gray-800 mb-1">Cultural Buddy</h3>
+                                            <p className="text-sm text-gray-600">Roleplay with locally-aware AI</p>
                                         </div>
                                     </div>
                                 </div>
@@ -262,9 +262,9 @@ export default function Dashboard() {
                         {activeTab === 'itinerary' && <TravelItinerary relocationData={relocationData} />}
                         {activeTab === 'flights' && <FlightDeals />}
                         {activeTab === 'calendar' && <SmartCalendar />}
-                        {activeTab === 'culture' && <CultureGuide country={relocationData.destinationCountry} />}
-                        {activeTab === 'language' && <LanguageLearning relocationData={relocationData} />}
                         {activeTab === 'translator' && <Translator relocationData={relocationData} />}
+                        {activeTab === 'buddy' && <CulturalBuddy relocationData={relocationData} />}
+                        {activeTab === 'language' && <LanguageLearning relocationData={relocationData} />}
                         {activeTab === 'currency' && <CurrencyConverter relocationData={relocationData} />}
                         {activeTab === 'documents' && <PDFUploader />}
                         {activeTab === 'packing' && <PackingList relocationData={relocationData} />}

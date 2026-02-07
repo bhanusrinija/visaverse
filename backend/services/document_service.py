@@ -18,25 +18,17 @@ class DocumentService:
         """Upload PDF, extract text, and analyze using AI"""
         
         try:
-            # Extract text from PDF
+            # Extract text from PDF (for fallback/logging purposes, but don't fail here)
             text = self._extract_pdf_text(file_content)
             
-            if not text.strip():
-                return DocumentAnalysisResponse(
-                    document_url=None,
-                    summary="Unable to extract text from PDF",
-                    key_points=["PDF may be image-based or encrypted"],
-                    important_dates=[],
-                    missing_info=["Text extraction failed"],
-                    simplified_explanation="This PDF could not be read. It may be scanned or protected.",
-                    document_type=document_type
-                )
+            # Note: We used to fail here if text was empty, but now we let AI try multimodal analysis
+            # which works even for image-only PDFs/images.
             
             # Upload to Firebase Storage
             document_url = await firebase_service.upload_pdf(user_id, file_content, filename)
             
-            # Analyze with AI
-            analysis = await self._analyze_with_ai(text, document_type)
+            # Analyze with AI (Multimodal)
+            analysis = await self._analyze_with_ai(file_content, filename, document_type)
             
             return DocumentAnalysisResponse(
                 document_url=document_url,
@@ -70,22 +62,24 @@ class DocumentService:
             print(f"Error extracting PDF text: {e}")
             return ""
     
-    async def _analyze_with_ai(self, text: str, document_type: str) -> dict:
-        """Analyze document text using Gemini AI"""
+    async def _analyze_with_ai(self, file_content: bytes, filename: str, document_type: str) -> dict:
+        """Analyze document using Gemini AI's multimodal capabilities"""
+        
+        mime_type = "application/pdf"
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+            ext = filename.split('.')[-1].lower().replace('jpg', 'jpeg')
+            mime_type = f"image/{ext}"
 
-        # Limit text length to avoid token limits
-        text_preview = text[:4000] if len(text) > 4000 else text
-
-        prompt = f"""Analyze this {document_type} document and provide:
+        prompt = f"""Analyze this {document_type} document image/PDF and provide:
 
 1. A brief summary (2-3 sentences)
 2. Key points (3-5 bullet points)
-3. Important dates or deadlines (list any dates found)
-4. Missing information or action items needed
-5. Simplified explanation for someone unfamiliar with legal/official documents
+3. Important dates or deadlines (list any dates found, e.g., expiry, issue date)
+4. Missing information, stamps, or signatures needed
+5. Simplified explanation for someone unfamiliar with official documents
 
-Document text:
-{text_preview}
+Look specifically for stamps, signatures, and official seals to verify authenticity.
+Document type: {document_type}
 
 Respond in this format:
 SUMMARY: [your summary]
@@ -100,36 +94,40 @@ MISSING INFO:
 EXPLANATION: [simplified explanation]"""
 
         try:
-            response = await gemini_service.generate_response(prompt)
+            response = await gemini_service.generate_multimodal_response(prompt, file_content, mime_type, use_pro=True)
             return self._parse_analysis(response, document_type)
         except Exception as e:
             error_msg = str(e)
-            print(f"Error in AI analysis: {error_msg}")
-
-            # Check if it's a quota/rate limit error
-            if "quota" in error_msg.lower() or "rate" in error_msg.lower() or "429" in error_msg:
-                print("Gemini API quota exceeded, using fallback analysis")
-                return self._create_fallback_analysis(text_preview, document_type)
-
-            return {
-                "summary": "Document uploaded successfully",
-                "key_points": ["AI analysis temporarily unavailable"],
-                "important_dates": [],
-                "missing_info": [],
-                "simplified_explanation": "Please review the document manually.",
-                "document_type": document_type
-            }
+            print(f"Error in multimodal AI analysis: {error_msg}")
+            
+            # Fallback to text extraction if multimodal fails
+            text = self._extract_pdf_text(file_content)
+            return self._create_fallback_analysis(text, document_type)
     
     def _parse_analysis(self, response: str, doc_type: str) -> dict:
-        """Parse AI response into structured format"""
+        """Parse AI response into structured format using robust regex"""
         
         try:
-            summary = self._extract_section(response, "SUMMARY:", ["KEY POINTS:", "DATES:"])
-            key_points = self._extract_list(response, "KEY POINTS:", ["DATES:", "MISSING"])
-            dates = self._extract_list(response, "DATES:", ["MISSING", "EXPLANATION"])
-            missing = self._extract_list(response, "MISSING INFO:", ["EXPLANATION", "SUMMARY"])
-            explanation = self._extract_section(response, "EXPLANATION:", [])
+            # Using regex for more robust section extraction (case-insensitive, handles bolding)
+            summary = self._extract_section_regex(response, r"(?i)SUMMARY[:\s]*", [r"(?i)KEY\s*POINTS", r"(?i)DATES", r"(?i)IMPORTANT\s*DATES"])
+            key_points = self._extract_list_regex(response, r"(?i)KEY\s*POINTS[:\s]*", [r"(?i)DATES", r"(?i)IMPORTANT\s*DATES", r"(?i)MISSING"])
+            dates = self._extract_list_regex(response, r"(?i)(?:IMPORTANT\s*)?DATES[:\s]*", [r"(?i)MISSING", r"(?i)EXPLANATION"])
+            missing = self._extract_list_regex(response, r"(?i)MISSING\s*(?:INFO|INFORMATION)[:\s]*", [r"(?i)EXPLANATION", r"(?i)SUMMARY"])
+            explanation = self._extract_section_regex(response, r"(?i)EXPLANATION[:\s]*", [])
             
+            # Final fallback check: if everything is empty, the AI might have used a different format
+            if not any([summary, key_points, dates, missing, explanation]):
+                print(f"Warning: Regex parsing failed to extract sections from response: {response[:100]}...")
+                # Try a super-basic split as last resort
+                return {
+                    "summary": response[:300] + "..." if len(response) > 300 else response,
+                    "key_points": ["Review document for detailed insights"],
+                    "important_dates": [],
+                    "missing_info": ["Manual verification required"],
+                    "simplified_explanation": "Could not parse structured analysis. Please read the summary above.",
+                    "document_type": doc_type
+                }
+
             return {
                 "summary": summary or "Document analysis completed",
                 "key_points": key_points or ["See document for details"],
@@ -141,46 +139,60 @@ EXPLANATION: [simplified explanation]"""
         except Exception as e:
             print(f"Error parsing analysis: {e}")
             return {
-                "summary": response[:200],
-                "key_points": ["See full response"],
+                "summary": "Analysis completed (Parsing error)",
+                "key_points": ["Refer to original document"],
                 "important_dates": [],
                 "missing_info": [],
-                "simplified_explanation": response,
+                "simplified_explanation": response[:500] if response else "Error parsing AI response.",
                 "document_type": doc_type
             }
     
-    def _extract_section(self, text: str, start_marker: str, end_markers: List[str]) -> str:
-        """Extract text section between markers"""
-        if start_marker not in text:
+    def _extract_section_regex(self, text: str, start_pattern: str, end_patterns: List[str]) -> str:
+        """Extract text section using regex patterns"""
+        start_match = re.search(start_pattern, text)
+        if not start_match:
             return ""
         
-        start_idx = text.index(start_marker) + len(start_marker)
+        start_idx = start_match.end()
         end_idx = len(text)
         
-        for end_marker in end_markers:
-            if end_marker in text[start_idx:]:
-                end_idx = text.index(end_marker, start_idx)
-                break
+        for end_pattern in end_patterns:
+            end_match = re.search(end_pattern, text[start_idx:])
+            if end_match:
+                possible_end = start_idx + end_match.start()
+                if possible_end < end_idx:
+                    end_idx = possible_end
+                    break
         
-        return text[start_idx:end_idx].strip()
+        return text[start_idx:end_idx].strip().strip('*#-_ \n')
     
-    def _extract_list(self, text: str, start_marker: str, end_markers: List[str]) -> List[str]:
-        """Extract bullet list from section"""
-        section = self._extract_section(text, start_marker, end_markers)
+    def _extract_list_regex(self, text: str, start_pattern: str, end_patterns: List[str]) -> List[str]:
+        """Extract bullet list from section using regex"""
+        section = self._extract_section_regex(text, start_pattern, end_patterns)
         if not section:
             return []
 
-        # Extract lines starting with - or •
+        # Extract lines starting with bullet points or numbers
         lines = section.split('\n')
         items = []
         for line in lines:
-            line = line.strip()
-            if line.startswith('-') or line.startswith('•'):
-                items.append(line[1:].strip())
-            elif line and items:  # Continuation of previous item
+            line = line.strip().strip('*#-_ ')
+            if not line:
+                continue
+            
+            # Check if it looks like a new item (starts with - or number.)
+            # or if it's the first line of the section (might not have bullet)
+            match = re.match(r'^[\d\.\-\•\*\s]+(.*)', line)
+            if match:
+                content = match.group(1).strip()
+                if content:
+                    items.append(content)
+            elif not items and line: # First line without bullet
+                items.append(line)
+            elif items: # Continuation
                 items[-1] += " " + line
 
-        return items[:10]  # Limit to 10 items
+        return items[:10]
 
     def _create_fallback_analysis(self, text: str, document_type: str) -> dict:
         """Create basic analysis when AI is unavailable (quota exceeded)"""

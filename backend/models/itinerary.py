@@ -9,9 +9,16 @@ class ItineraryRequest(BaseModel):
     travel_style: str  # "relaxed", "moderate", "packed"
     interests: List[str]  # ["culture", "food", "nature", "history", etc.]
 
+class Activity(BaseModel):
+    time: str
+    task: str
+    location: str
+    rating: float  # Scale of 1.0 - 5.0
+    description: str = "" # Brief recommendation/why to visit
+
 class DayPlan(BaseModel):
     day_number: int
-    activities: List[str]
+    activities: List[Activity]
     estimated_cost: float
     tips: List[str]
 

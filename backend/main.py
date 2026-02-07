@@ -6,7 +6,7 @@ from config import settings
 from routers import (
     relocation, culture, language, voice, currency, documents, packing,
     survival_plan, accommodation, rental_housing, itinerary, first_hours,
-    arrival_tasks, flights, calendar
+    arrival_tasks, flights, calendar, simulation
 )
 
 app = FastAPI(
@@ -55,6 +55,7 @@ app.include_router(first_hours.router)
 app.include_router(arrival_tasks.router)
 app.include_router(flights.router)
 app.include_router(calendar.router)
+app.include_router(simulation.router)
 
 # -------------------------
 # HEALTH ENDPOINTS

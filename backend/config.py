@@ -8,6 +8,8 @@ load_dotenv()
 class Settings(BaseSettings):
     # Gemini AI
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    gemini_flash_model: str = os.getenv("GEMINI_FLASH_MODEL", "gemini-3-flash-preview")
+    gemini_pro_model: str = os.getenv("GEMINI_PRO_MODEL", "gemini-3-pro-preview")
     
     # Firebase
     firebase_project_id: str = os.getenv("FIREBASE_PROJECT_ID", "visaverse-fc9f3")

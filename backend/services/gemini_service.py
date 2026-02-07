@@ -17,31 +17,57 @@ class GeminiService:
         
         try:
             genai.configure(api_key=settings.gemini_api_key)
-            # Using gemini-2.5-flash - confirmed available in free tier
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            self.flash_model = genai.GenerativeModel(settings.gemini_flash_model)
+            self.pro_model = genai.GenerativeModel(settings.gemini_pro_model)
             self._initialized = True
-            print("[OK] Gemini AI initialized successfully with gemini-2.5-flash")
+            print(f"[OK] Gemini AI initialized with Flash: {settings.gemini_flash_model} and Pro: {settings.gemini_pro_model}")
         except Exception as e:
             print(f"[WARNING] Gemini initialization warning: {e}")
-            self.model = None
+            self.flash_model = None
+            self.pro_model = None
     
-    async def generate_response(self, prompt: str, context: Optional[str] = None) -> str:
+    async def generate_response(self, prompt: str, context: Optional[str] = None, use_pro: bool = False) -> str:
         """Generate AI response using Gemini"""
+        model = self.pro_model if use_pro else self.flash_model
         try:
-            if not self.model:
-                return "AI service is currently unavailable. Please configure GEMINI_API_KEY."
+            if not model:
+                return "AI service is currently unavailable."
             
             full_prompt = f"{context}\n\n{prompt}" if context else prompt
-            response = self.model.generate_content(full_prompt)
+            # Use generate_content_async for non-blocking execution
+            response = await model.generate_content_async(full_prompt)
             return response.text
         except Exception as e:
             print(f"Error generating response: {e}")
             return f"Error: {str(e)}"
     
-    async def translate_text(self, text: str, source_lang: str, target_lang: str) -> str:
-        """Translate text using Gemini"""
+    async def generate_multimodal_response(self, prompt: str, file_data: bytes, mime_type: str = "application/pdf", use_pro: bool = False) -> str:
+        """Generate AI response using Gemini with multimodal input (Image/PDF)"""
+        # Multimodal can also use Flash for speed unless explicitly Pro
+        model = self.pro_model if use_pro else self.flash_model
         try:
-            if not self.model:
+            if not model:
+                return "AI service is currently unavailable."
+            
+            content = [
+                prompt,
+                {
+                    "mime_type": mime_type,
+                    "data": file_data
+                }
+            ]
+            
+            # Use generate_content_async for non-blocking execution
+            response = await model.generate_content_async(content)
+            return response.text
+        except Exception as e:
+            print(f"Error generating multimodal response: {e}")
+            return f"Error: {str(e)}"
+    
+    async def translate_text(self, text: str, source_lang: str, target_lang: str) -> str:
+        """Translate text using Gemini (Always using Flash for speed)"""
+        try:
+            if not self.flash_model:
                 return "Translation service unavailable"
             
             prompt = f"""Translate the following text from {source_lang} to {target_lang}.
@@ -51,16 +77,18 @@ Text: {text}
 
 Translation:"""
             
-            response = self.model.generate_content(prompt)
+            # Use generate_content_async for non-blocking execution
+            response = await self.flash_model.generate_content_async(prompt)
             return response.text.strip()
         except Exception as e:
             print(f"Error translating text: {e}")
             return f"Translation error: {str(e)}"
     
-    async def analyze_document(self, document_text: str, document_type: str = "visa") -> Dict[str, Any]:
-        """Analyze document and provide simplified explanation"""
+    async def analyze_document(self, document_text: str, document_type: str = "visa", use_pro: bool = False) -> Dict[str, Any]:
+        """Analyze document (Now defaulting to Flash for speed)"""
+        model = self.pro_model if use_pro else self.flash_model
         try:
-            if not self.model:
+            if not model:
                 return {"error": "Document analysis unavailable"}
             
             prompt = f"""You are analyzing a {document_type} document. Please provide:
@@ -76,8 +104,8 @@ Document text:
 
 Provide the response in JSON format with keys: summary, key_points, dates, missing_info, explanation"""
             
-            response = self.model.generate_content(prompt)
-            # Parse response - for now return as text, can enhance JSON parsing
+            # Use generate_content_async for non-blocking execution
+            response = await model.generate_content_async(prompt)
             return {
                 "analysis": response.text,
                 "document_type": document_type

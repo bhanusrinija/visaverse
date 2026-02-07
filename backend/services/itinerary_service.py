@@ -19,15 +19,17 @@ class ItineraryService:
         interests_text = ", ".join(interests) if interests else "general sightseeing"
         
         prompt = f"""You are a travel planning expert with REAL knowledge of {city}, {destination_country}.
-Create a detailed {duration_days}-day itinerary with ACTUAL, REAL places to visit.
+Create a detailed {duration_days}-day itinerary with ACTUAL, REAL places to visit (e.g., if in Hyderabad, suggest 'Charminar' instead of 'historic site').
 
 Budget: ${total_budget}
 Travel Style: {travel_style}
 Interests: {interests_text}
 
-CRITICAL: Each day MUST be UNIQUE with DIFFERENT real attractions, restaurants, and activities.
-Include REAL place names: museums, landmarks, restaurants, markets, parks, etc.
-Make each day's activities DISTINCT and SPECIFIC to {city}.
+CRITICAL: Every day MUST be UNIQUE. DO NOT repeat locations, restaurants, or activities across different days.
+Day 2 must be completely different from Day 1, Day 3 different from Day 2, etc.
+Include a diverse mix: historic sites, modern cafes, local markets, parks, and hidden gems.
+Include REAL place names and their SPECIFIC LOCATIONS/ADDRESSES that can be searched on a map.
+Make each day's activities DISTINCT and SPECIFIC to {city}. 
 
 Provide response in JSON format:
 {{
@@ -35,10 +37,20 @@ Provide response in JSON format:
         {{
             "day_number": 1,
             "activities": [
-                "9 AM: Visit [REAL LANDMARK NAME]",
-                "12 PM: Lunch at [REAL RESTAURANT NAME]",
-                "2 PM: Explore [REAL ATTRACTION NAME]",
-                "6 PM: Dinner at [REAL LOCAL AREA/RESTAURANT]"
+                {{
+                    "time": "9 AM",
+                    "task": "Visit the [SPECIFIC LANDMARK NAME]",
+                    "location": "[FULL SEARCHABLE LOCATION NAME OR ADDRESS]",
+                    "rating": 4.8,
+                    "description": "Short (1 sentence) reason why this place is a must-visit."
+                }},
+                {{
+                    "time": "12 PM",
+                    "task": "Lunch at [SPECIFIC RESTAURANT/CAFÉ NAME]",
+                    "location": "[SPECIFIC ADDRESS or NEIGHBORHOOD]",
+                    "rating": 4.5,
+                    "description": "Short tip on what to try (e.g., 'Famous for its Irani chai and Osmania biscuits')."
+                }}
             ],
             "estimated_cost": 150.0,
             "tips": ["Specific tip for day 1 activities", "Best time to visit tip"]
@@ -56,15 +68,11 @@ Provide response in JSON format:
     "money_saving_tips": ["tip 1", "tip 2"]
 }}
 
-For {travel_style} style:
-- relaxed: fewer activities, more leisure time
-- moderate: balanced mix of activities and rest
-- packed: maximum activities, fast-paced
-
+Each activity MUST have a 'rating' (float between 1.0 and 5.0) and a 'description'.
 Ensure total_estimated_cost matches budget_breakdown sum and is close to ${total_budget}."""
 
         try:
-            response = await gemini_service.generate_response(prompt)
+            response = await gemini_service.generate_response(prompt, use_pro=False)
             response_text = response.strip()
             
             if "```json" in response_text:
@@ -73,6 +81,23 @@ Ensure total_estimated_cost matches budget_breakdown sum and is close to ${total
                 response_text = response_text.split("```")[1].split("```")[0].strip()
             
             data = json.loads(response_text)
+            
+            # Post-processing to ensure uniqueness
+            seen_locations = set()
+            if "daily_plans" in data:
+                for day in data["daily_plans"]:
+                    if "activities" in day:
+                        # Keep only activities with unique locations
+                        unique_activities = []
+                        for act in day["activities"]:
+                            loc = act.get("location", "").lower().strip()
+                            if loc and loc not in seen_locations:
+                                seen_locations.add(loc)
+                                unique_activities.append(act)
+                            elif not loc: # Keep if no location specified
+                                unique_activities.append(act)
+                        day["activities"] = unique_activities
+
             return ItineraryResponse(**data)
             
         except Exception as e:
@@ -80,19 +105,48 @@ Ensure total_estimated_cost matches budget_breakdown sum and is close to ${total
             return self._create_fallback_itinerary(city, duration_days, total_budget)
     
     def _create_fallback_itinerary(self, city: str, days: int, budget: float) -> ItineraryResponse:
-        """Create fallback itinerary"""
+        """Create fallback itinerary with specific naming for common cities"""
         daily_budget = budget / days
+        from models.itinerary import Activity
 
-        # Different activities for each day
-        day_activities = [
-            ["9 AM: Visit main landmarks and historic center", "12 PM: Lunch at local market", "2 PM: Museum tour", "6 PM: Dinner at traditional restaurant"],
-            ["9 AM: Morning walking tour of old town", "11 AM: Coffee at local café", "1 PM: Shopping at main street", "5 PM: Sunset at scenic viewpoint"],
-            ["10 AM: Day trip to nearby attraction", "12 PM: Picnic lunch", "3 PM: Nature walk or park visit", "7 PM: Try street food"],
-            ["9 AM: Visit religious/cultural sites", "11 AM: Local craft market", "2 PM: Cooking class or food tour", "6 PM: Rooftop dining"],
-            ["8 AM: Early morning market visit", "10 AM: Architecture tour", "1 PM: Lunch cruise or harbor tour", "5 PM: Live music venue"],
-            ["10 AM: Art galleries and exhibitions", "1 PM: Trendy neighborhood lunch", "3 PM: Beach or waterfront", "7 PM: Farewell dinner"],
-            ["9 AM: Last-minute shopping", "11 AM: Brunch at popular spot", "2 PM: Relax at park/spa", "5 PM: Airport transfer"]
-        ]
+        # Specialized fallback for Hyderabad if requested
+        if "hyderabad" in city.lower():
+            day_activities = [
+                [
+                    Activity(time="9 AM", task="Visit Charminar", location="Charminar, Hyderabad", rating=4.7, description="The iconic 16th-century mosque and monument of Hyderabad."),
+                    Activity(time="12 PM", task="Lunch at Paradise Biryani", location="Paradise Food Court, Secunderabad", rating=4.5, description="Taste the world-famous Hyderabadi Dum Biryani."),
+                    Activity(time="3 PM", task="Explore Salar Jung Museum", location="Salar Jung Road, Hyderabad", rating=4.6, description="One of the largest art museums in India with incredible collections."),
+                    Activity(time="7 PM", task="Tea at Café Niloufer", location="Lakdikapul, Hyderabad", rating=4.8, description="Famous for its creamy Irani chai and crispy Osmania biscuits.")
+                ],
+                [
+                    Activity(time="10 AM", task="Explore Golconda Fort", location="Golkonda, Hyderabad", rating=4.7, description="Majestic medieval citadel and fortress complex."),
+                    Activity(time="1 PM", task="Lunch at Chutneys", location="Banjara Hills, Hyderabad", rating=4.4, description="Famous for its authentic South Indian thalis and world-class chutneys."),
+                    Activity(time="4 PM", task="Visit Qutb Shahi Tombs", location="Ibrahim Bagh, Hyderabad", rating=4.5, description="Beautiful tomb complex of the founding kings of Hyderabad."),
+                    Activity(time="7 PM", task="Dinner at Jewel of Nizams", location="Masab Tank, Hyderabad", rating=4.6, description="Fine dining experience with traditional Hyderabadi flavors.")
+                ],
+                [
+                    Activity(time="9 AM", task="Birla Mandir Visit", location="Hill Fort Rd, Hyderabad", rating=4.8, description="Stunning white marble temple on a hill overlooking Hussain Sagar lake."),
+                    Activity(time="11 AM", task="Walk around Hussain Sagar & Lumbini Park", location="Necklace Road, Hyderabad", rating=4.4, description="Enjoy the giant Buddha statue and scenic lake views."),
+                    Activity(time="1 PM", task="Lunch at Ohri's Tansen", location="Necklace Road, Hyderabad", rating=4.5, description="Thematic restaurant with exquisite Mughlai and North Indian cuisine."),
+                    Activity(time="4 PM", task="Shopping at Laad Bazaar", location="Near Charminar, Hyderabad", rating=4.6, description="Historic market famous for bangles and traditional crafts.")
+                ]
+            ]
+        else:
+            # General fallback
+            day_activities = [
+                [
+                    Activity(time="9 AM", task="Visit Main Landmark", location=f"{city} Historic Center", rating=4.5, description="The most famous historic site in the city."),
+                    Activity(time="12 PM", task="Local Lunch", location=f"{city} Central Market", rating=4.3, description="Great spot to try authentic local street food."),
+                    Activity(time="3 PM", task="National Museum", location=f"{city} Cultural Quarter", rating=4.4, description="Learn about the rich history and heritage of the region."),
+                    Activity(time="7 PM", task="Evening Dinner", location=f"{city} Waterfront", rating=4.6, description="Enjoy a meal with a beautiful view of the city skyline.")
+                ],
+                [
+                    Activity(time="10 AM", task="Morning Park Walk", location=f"{city} Botanical Garden", rating=4.5, description="Peaceful escape into nature within the city."),
+                    Activity(time="1 PM", task="Modern District Lunch", location=f"{city} Tech Hub", rating=4.4, description="Trendy spots and international cuisine."),
+                    Activity(time="4 PM", task="Art Gallery Visit", location=f"{city} Arts District", rating=4.5, description="Supporting local and contemporary artists."),
+                    Activity(time="7 PM", task="Rooftop Drinks", location=f"{city} Skyline Bar", rating=4.7, description="Panoramic views to end the day perfectly.")
+                ]
+            ]
 
         daily_tips = [
             ["Book tickets online to skip queues", "Start early to avoid crowds"],

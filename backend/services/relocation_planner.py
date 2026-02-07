@@ -39,7 +39,7 @@ Provide a comprehensive response in the following JSON format:
 Be specific to the countries and purpose mentioned. Include practical, actionable advice."""
 
         try:
-            response = await gemini_service.generate_response(prompt)
+            response = await gemini_service.generate_response(prompt, use_pro=True)
             
             # Try to parse JSON from response
             # Gemini sometimes wraps JSON in markdown code blocks

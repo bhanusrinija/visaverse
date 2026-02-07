@@ -18,9 +18,9 @@ export default function LanguageLearning({ relocationData }) {
 
     useEffect(() => {
         // Update language when destination country changes
-        const detectedLang = getLanguageForCountry(relocationData.destinationCountry);
+        const detectedLang = getLanguageForCountry(relocationData?.destinationCountry || 'Germany');
         setLanguage(detectedLang);
-    }, [relocationData.destinationCountry]);
+    }, [relocationData?.destinationCountry]);
 
     useEffect(() => {
         loadPhrases();
@@ -43,7 +43,10 @@ export default function LanguageLearning({ relocationData }) {
 
         // If not in offline data, try API
         try {
-            const phrasesData = await languageAPI.getPhrases(relocationData.destinationCountry, language);
+            const phrasesData = await languageAPI.getPhrases(
+                relocationData?.destinationCountry || 'Germany',
+                language || 'German'
+            );
             setPhrases(phrasesData);
             setIsOffline(false);
         } catch (error) {
