@@ -17,7 +17,6 @@ import FirstHoursChecklist from '@/components/FirstHoursChecklist';
 import ArrivalTasks from '@/components/ArrivalTasks';
 import FlightDeals from '@/components/FlightDeals';
 import SmartCalendar from '@/components/SmartCalendar';
-import CulturalBuddy from '@/components/CulturalBuddy';
 import { Home, MessageSquare, Languages, FileText, Coins, Package, BookOpen, CheckSquare, Calendar, Building2, Map, Clock, ListChecks, ChevronRight, Menu, X, Plane, CalendarClock, UserPlus } from 'lucide-react';
 
 export default function Dashboard() {
@@ -73,7 +72,6 @@ export default function Dashboard() {
         {
             name: 'Cultural Integration',
             items: [
-                { id: 'buddy', label: 'Cultural Buddy', icon: UserPlus, color: 'text-yellow-600' },
                 { id: 'language', label: 'Language Learning', icon: Languages, color: 'text-accent-600' },
                 { id: 'translator', label: 'Live Translator', icon: Languages, color: 'text-info-600' },
             ]
@@ -238,15 +236,6 @@ export default function Dashboard() {
                                             <h3 className="font-semibold text-gray-800 mb-1">Voice AI Assistant</h3>
                                             <p className="text-sm text-gray-600">Ask anything, anytime</p>
                                         </div>
-
-                                        <div
-                                            onClick={() => setActiveTab('buddy')}
-                                            className="p-4 bg-yellow-50 rounded-xl border border-yellow-200 hover:border-yellow-400 transition-all cursor-pointer hover:shadow-md"
-                                        >
-                                            <UserPlus className="w-8 h-8 text-yellow-600 mb-2" />
-                                            <h3 className="font-semibold text-gray-800 mb-1">Cultural Buddy</h3>
-                                            <p className="text-sm text-gray-600">Roleplay with locally-aware AI</p>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -263,7 +252,6 @@ export default function Dashboard() {
                         {activeTab === 'flights' && <FlightDeals />}
                         {activeTab === 'calendar' && <SmartCalendar />}
                         {activeTab === 'translator' && <Translator relocationData={relocationData} />}
-                        {activeTab === 'buddy' && <CulturalBuddy relocationData={relocationData} />}
                         {activeTab === 'language' && <LanguageLearning relocationData={relocationData} />}
                         {activeTab === 'currency' && <CurrencyConverter relocationData={relocationData} />}
                         {activeTab === 'documents' && <PDFUploader />}

@@ -21,17 +21,12 @@ VisaVerse is an **AI-powered, voice-enabled relocation assistant** designed to s
 - Real-time voice-to-voice and text translation.
 - Essential phrase categories (Emergency, Food, Transport) with voice pronunciation.
 
-### 3. 🧠 Cultural Buddy (AI Roleplay)
-- Interactive cultural simulation engine for practicing high-stakes social scenarios.
-- Instant feedback on cultural appropriateness and social norms.
-- Optimized with **Gemini 3 Flash** for near-instant interaction.
-
-### 4. 📄 Document AI Analysis
+### 3. 📄 Document AI Analysis
 - Intelligent extraction and analysis of visas, passports, and official documents.
 - Detects missing information, important dates, and provides simplified legal explanations.
 - Support for image-based PDFs and official stamps/seals.
 
-### 5. 🎙️ Voice Assistant
+### 4. 🎙️ Voice Assistant
 - Truly hands-free interaction using the Web Speech API.
 - Context-aware conversational loop for managing your entire relocation on the go.
 
