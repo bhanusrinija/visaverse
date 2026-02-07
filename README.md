@@ -1,233 +1,103 @@
-# VisaVerse - Smart Global Relocation Companion
+# 🌍 VisaVerse: Your Smart Global Relocation Companion
 
-🌍 **AI-powered, voice-enabled relocation assistant** that helps users move to another country by handling visa guidance, culture, language translation, voice interaction, currency help, document understanding, and packing essentials in one place.
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini%203-blue?style=flat&logo=google-gemini)](https://ai.google.dev/)
+[![Firebase](https://img.shields.io/badge/Storage-Firebase-FFCA28?style=flat&logo=firebase)](https://firebase.google.com/)
 
-## 🎯 Features
-
-### 7 Integrated Modules
-
-1. **AI Relocation Planner** - Visa type suggestions, document checklists, timeline estimation
-2. **Cultural Intelligence Guide** - Social norms, workplace etiquette, cultural sensitivities
-3. **Language Survival + Translator** - Essential phrases + real-time voice translation
-4. **Voice Conversational AI** - Hands-free interaction with AI assistant
-5. **Currency & Money Assistant** - Real-time conversion + financial advice
-6. **PDF Document Analysis** - AI-powered document understanding
-7. **Smart Packing List** - Country-specific packing recommendations
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Next.js 14, Tailwind CSS, Web Speech API
-- **Backend**: FastAPI (Python)
-- **AI**: Google Gemini API
-- **Database**: Firebase Firestore
-- **Storage**: Firebase Storage
-- **Translation**: Gemini API
-- **Voice**: Web Speech API (browser-native)
-
-## 📦 Installation
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Python 3.9+
-- Gemini API key
-- Firebase project
-
-### Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment (recommended)
-python -m venv venv
-venv\Scripts\activate  # On Windows
-# source venv/bin/activate  # On Mac/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-copy .env.example .env
-
-# Add your Gemini API key to .env
-# GEMINI_API_KEY=your_key_here
-
-# Run the server
-uvicorn main:app --reload
-```
-
-Backend will run on `http://localhost:8000`
-
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Environment is already configured in .env.local
-
-# Run development server
-npm run dev
-```
-
-Frontend will run on `http://localhost:3000`
-
-## 🚀 Usage
-
-1. **Start Backend**: Run `uvicorn main:app --reload` in backend directory
-2. **Start Frontend**: Run `npm run dev` in frontend directory
-3. **Open Browser**: Navigate to `http://localhost:3000`
-4. **Select Countries**: Choose your home and destination countries
-5. **Explore Modules**: Use the dashboard tabs to access all features
-
-## 🎨 UI Highlights
-
-- **Glassmorphism Design** - Modern, premium aesthetic
-- **Smooth Animations** - Fade-in, slide-up, floating elements
-- **Gradient Accents** - Dynamic color schemes
-- **Responsive Layout** - Works on all devices
-- **Voice Integration** - Hands-free interaction
-- **Real-time Updates** - Live data from APIs
-
-## 📱 Browser Compatibility
-
-- **Best Experience**: Google Chrome (full Web Speech API support)
-- **Supported**: Edge, Safari, Firefox (limited voice features)
-- **Mobile**: iOS Safari, Chrome Mobile
-
-## 🔑 API Endpoints
-
-### Relocation
-- `POST /api/relocation/plan` - Get relocation plan
-
-### Culture
-- `POST /api/culture/guide` - Get cultural guide
-
-### Language
-- `POST /api/language/translate` - Translate text
-- `POST /api/language/phrases` - Get essential phrases
-
-### Voice
-- `POST /api/voice/query` - Process voice query
-
-### Currency
-- `POST /api/currency/convert` - Convert currency
-- `POST /api/currency/advice` - Get money advice
-
-### Documents
-- `POST /api/documents/analyze` - Analyze PDF
-
-### Packing
-- `POST /api/packing/list` - Get packing list
-
-## 🔧 Configuration
-
-### Backend (.env)
-```env
-GEMINI_API_KEY=your_gemini_api_key
-FIREBASE_PROJECT_ID=visaverse-fc9f3
-FIREBASE_STORAGE_BUCKET=visaverse-fc9f3.firebasestorage.app
-```
-
-### Frontend (.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-# ... other Firebase config
-```
-
-## 📝 Project Structure
-
-```
-Smart Global Relocation Companion/
-├── backend/
-│   ├── main.py                 # FastAPI app
-│   ├── config.py               # Configuration
-│   ├── models/                 # Pydantic models
-│   ├── services/               # Business logic
-│   │   ├── gemini_service.py
-│   │   ├── firebase_service.py
-│   │   ├── relocation_planner.py
-│   │   ├── cultural_guide.py
-│   │   ├── language_service.py
-│   │   ├── voice_service.py
-│   │   ├── currency_service.py
-│   │   ├── document_service.py
-│   │   └── packing_service.py
-│   └── routers/                # API endpoints
-├── frontend/
-│   ├── app/
-│   │   ├── page.js             # Landing page
-│   │   ├── dashboard/page.js   # Dashboard
-│   │   └── globals.css         # Global styles
-│   ├── components/
-│   │   ├── VoiceChat.jsx
-│   │   ├── Translator.jsx
-│   │   ├── PDFUploader.jsx
-│   │   ├── CurrencyConverter.jsx
-│   │   ├── RelocationChecklist.jsx
-│   │   ├── CultureGuide.jsx
-│   │   ├── LanguageLearning.jsx
-│   │   └── PackingList.jsx
-│   └── lib/
-│       ├── firebase.js         # Firebase config
-│       ├── api.js              # API client
-│       └── speech.js           # Web Speech API
-└── README.md
-```
-
-## 🌟 Key Features Explained
-
-### Voice AI
-- Speech-to-text input
-- Text-to-speech responses
-- Context-aware conversations
-- Follow-up suggestions
-
-### Translation
-- Real-time translation
-- Voice pronunciation
-- Multiple languages
-- Context preservation
-
-### Document Analysis
-- PDF text extraction
-- AI-powered analysis
-- Simplified explanations
-- Action item detection
-
-### Smart Packing
-- Country-specific items
-- Priority categorization
-- Climate considerations
-- Cultural necessities
-
-## 🐛 Troubleshooting
-
-### Backend Issues
-- **Import errors**: Ensure virtual environment is activated
-- **API errors**: Check Gemini API key in .env
-- **Firebase errors**: Verify Firebase credentials
-
-### Frontend Issues
-- **Build errors**: Delete `.next` folder and rebuild
-- **API connection**: Ensure backend is running on port 8000
-- **Voice not working**: Use Chrome browser for best support
-
-## 📄 License
-
-This project is for educational and personal use.
-
-## 🤝 Contributing
-
-This is a demonstration project. Feel free to fork and customize!
-
-## 📧 Support
-
-For issues or questions, please check the troubleshooting section or review the code comments.
+VisaVerse is an **AI-powered, voice-enabled relocation assistant** designed to simplify the complex journey of moving to a new country. By centralizing visa guidance, cultural intelligence, language tools, and logistical planning, VisaVerse empowers users to transition smoothly into their new lives.
 
 ---
 
-**Built with ❤️ using Next.js, FastAPI, and Gemini AI**
+## 🚀 Key Modules
+
+### 1. 📋 Smart Relocation Planner
+- AI-generated personalized relocation roadmaps.
+- Hyper-specific itineraries with real place names, ratings, and expert tips.
+- Interactive mapping with auto-scroll and direct Google Maps directions.
+
+### 2. 🗣️ Live Translator & Language Survival
+- **Indian Language Support**: Now supporting 11 major Indian languages (Hindi, Telugu, Bengali, etc.).
+- Real-time voice-to-voice and text translation.
+- Essential phrase categories (Emergency, Food, Transport) with voice pronunciation.
+
+### 3. 🧠 Cultural Buddy (AI Roleplay)
+- Interactive cultural simulation engine for practicing high-stakes social scenarios.
+- Instant feedback on cultural appropriateness and social norms.
+- Optimized with **Gemini 3 Flash** for near-instant interaction.
+
+### 4. 📄 Document AI Analysis
+- Intelligent extraction and analysis of visas, passports, and official documents.
+- Detects missing information, important dates, and provides simplified legal explanations.
+- Support for image-based PDFs and official stamps/seals.
+
+### 5. 🎙️ Voice Assistant
+- Truly hands-free interaction using the Web Speech API.
+- Context-aware conversational loop for managing your entire relocation on the go.
+
+### 6. 💰 Money & Currency Assistant
+- Real-time currency conversion for all global markets.
+- AI-driven financial advice for cost-of-living management in your destination country.
+
+### 7. 🎒 Smart Packing List
+- Climate and culture-aware packing recommendations.
+- Essential supply tracking for items unique to the home country.
+
+---
+
+## 🛠️ Technical Rationale
+
+VisaVerse is built on a high-performance stack chosen for speed and scalability:
+
+- **Next.js 14**: Enables a "Glassmorphism" premium UI with high-speed page transitions.
+- **FastAPI**: Provides an asynchronous backend capable of handling multiple AI model calls concurrently.
+- **Gemini 3 Hybrid Strategy**: Uses **Flash** for speed-critical tasks (Translation, Buddy) and **Pro** for high-reasoning tasks (Document Analysis).
+- **Web Speech API**: Browser-native voice intelligence for zero-latency interactions.
+
+*For a detailed deep dive into our tool choices, see [TECH_STACK.md](./TECH_STACK.md).*
+
+---
+
+## 📦 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Python 3.9+
+- Google Gemini API Key
+- Firebase Service Account
+
+### Quick Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-repo/visaverse.git
+   cd visaverse
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   # Configure .env with Gemini & Firebase keys
+   uvicorn main:app --reload
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   # Configure .env.local
+   npm run dev
+   ```
+
+---
+
+## 🌟 Modern UI/UX
+- **Glassmorphism Design Language** for a premium, futuristic look.
+- **Micro-animations** using Framer Motion and GSAP.
+- **Dynamic Map Integrations** for real-time travel planning.
+- **Responsive Web Design** ensuring a consistent experience across Desktop, Tablet, and Mobile.
+
+---
+
+**Built with ❤️ for the future of global mobility.**
